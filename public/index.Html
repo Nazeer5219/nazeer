@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Payment</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <h2>Stripe Payment Form</h2>
+    <form id="payment-form">
+        <input type="text" id="cardholder-name" placeholder="Cardholder Name" required>
+        <div id="card-element"><!-- Stripe element will be inserted here --></div>
+        <button type="submit">Pay</button>
+    </form>
+
+    <script>
+        const stripe = Stripe('pk_test_51Px2C2RqPHDu2FqaU8LF4tpYVQZrCEyJeAYEoJ6FvQVK4xR2T90JrdXJHiNAg1psxD8opiadIKlbixrO6il8uxvw00loVS3jeP'); // استبدل بالمفتاح العام الخاص بك
+        const elements = stripe.elements();
+
+        const card = elements.create('card');
+        card.mount('#card-element');
+
+        const form = document.getElementById('payment-form');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const { token, error } = await stripe.createToken(card);
+
+            if (error) {
+                console.error(error);
+            } else {
+                const response = await fetch('/charge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: token.id,
+                        amount: 20 // المبلغ المطلوب دفعه بالدولار مثلاً
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    console.error(data.error);
+                } else {
+                    console.log('Payment successful!', data);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
